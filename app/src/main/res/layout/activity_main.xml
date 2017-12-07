@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.abnervictor.lab8.MainActivity">
+
+    <include
+        layout="@layout/item_list"
+        android:id="@+id/item_list"
+        android:visibility="visible"
+        />
+
+    <include
+        layout="@layout/new_item"
+        android:id="@+id/new_item"
+        android:visibility="gone"
+        />
+
+</android.support.constraint.ConstraintLayout>
