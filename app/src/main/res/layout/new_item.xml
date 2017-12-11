@@ -44,7 +44,7 @@
         android:layout_marginTop="30dp"
         android:layout_marginLeft="20dp"
         />
-    <EditText
+    <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="@id/text_birthday"
@@ -52,6 +52,9 @@
         app:layout_constraintLeft_toRightOf="@id/text_birthday"
         app:layout_constraintRight_toRightOf="parent"
         android:id="@+id/inputBirthday"
+        android:text=" 点击选择日期"
+        android:textColor="@color/colorBlack"
+        android:textSize="18sp"
         android:layout_marginRight="20dp"
         android:layout_marginLeft="5dp"
         android:singleLine="true"

@@ -1,5 +1,6 @@
 package com.example.abnervictor.lab8;
 
+import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -33,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView Itemlist;//信息列表
     private SimpleAdapter simpleAdapter;
     private EditText inputName;
-    private EditText inputBirthday;
+    private TextView inputBirthday;
     private EditText inputPresent;
     private List<Map<String,Object>> listItems = new ArrayList<>();//用于向列表中填充列表项
     private DataBase dataBase;
@@ -41,9 +43,11 @@ public class MainActivity extends AppCompatActivity {
     private LayoutInflater layoutInflater;
     private View dialogView;
     private TextView editName;
-    private EditText editBirthday;
+    private TextView editBirthday;
     private EditText editPresent;
     private TextView phone;
+
+    private int year,month,day;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +75,11 @@ public class MainActivity extends AppCompatActivity {
         editBirthday = dialogView.findViewById(R.id.editBirthday);
         editPresent = dialogView.findViewById(R.id.editPresent);
         phone = dialogView.findViewById(R.id.phone);
+
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        year=cal.get(java.util.Calendar.YEAR);       //获取年月日时分秒
+        month=cal.get(java.util.Calendar.MONTH);   //获取到的月份是从0开始计数
+        day=cal.get(java.util.Calendar.DAY_OF_MONTH);
     }
 
     private void InitList(){
@@ -93,11 +102,44 @@ public class MainActivity extends AppCompatActivity {
                 item_list.setVisibility(View.GONE);
                 new_item.setVisibility(View.VISIBLE);
                 inputName.setText("");
-                inputBirthday.setText("");
+                inputBirthday.setText(" 点击选择日期");
                 inputPresent.setText("");
                 inputName.setError(null,null);
             }
         });//跳转到添加条目界面
+        inputBirthday.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DatePickerDialog.OnDateSetListener listener=new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker arg0, int year, int month, int day) {
+                        inputBirthday.setText(year+"-"+(++month)+"-"+day);      //将选择的日期显示到TextView中,因为之前获取month直接使用，所以不需要+1，这个地方需要显示，所以+1
+                    }
+                };
+                DatePickerDialog dialog=new DatePickerDialog(MainActivity.this, 0,listener,year,month,day);//后边三个参数为显示dialog时默认的日期，月份从0开始，0-11对应1-12个月
+                dialog.show();
+            }
+        });//选择日期的对话框
+        editBirthday.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int yy,mm,dd;
+                String date = editBirthday.getText().toString();
+                String[] set = date.split("-");
+                yy = Integer.parseInt(set[0]);
+                mm = Integer.parseInt(set[1])-1;
+                dd = Integer.parseInt(set[2]);
+                //从日期字符串中获取年月日信息，用于初始化日期选择对话框
+                DatePickerDialog.OnDateSetListener listener=new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker arg0, int year, int month, int day) {
+                        editBirthday.setText(year+"-"+(++month)+"-"+day);      //将选择的日期显示到TextView中,因为之前获取month直接使用，所以不需要+1，这个地方需要显示，所以+1
+                    }
+                };
+                DatePickerDialog dialog=new DatePickerDialog(MainActivity.this, 0,listener,yy,mm,dd);//后边三个参数为显示dialog时默认的日期，月份从0开始，0-11对应1-12个月
+                dialog.show();
+            }
+        });//选择日期的对话框
         addNewItems.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -114,7 +156,9 @@ public class MainActivity extends AppCompatActivity {
                     inputName.setError(null,null);
                     Toast.makeText(MainActivity.this,"保存成功",Toast.LENGTH_SHORT).show();
                     //
-                    dataBase.insert(inputName.getText().toString(),inputBirthday.getText().toString(),inputPresent.getText().toString());
+                    String Birthday = inputBirthday.getText().toString();
+                    Birthday = (Birthday.equals(" 点击选择日期")) ? "1926-08-17":Birthday;
+                    dataBase.insert(inputName.getText().toString(),Birthday,inputPresent.getText().toString());
                     //
                     refreshList();//刷新列表
                     new Handler().postDelayed(new Runnable(){
@@ -161,7 +205,6 @@ public class MainActivity extends AppCompatActivity {
                 EditAlertDialog.create().show();
             }
         });//点击列表项
-
         Itemlist.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int pos, long l) {
@@ -190,20 +233,20 @@ public class MainActivity extends AppCompatActivity {
         Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,null,
                 android.provider.ContactsContract.Contacts.DISPLAY_NAME + "='"+name+"'",null,null);
         if (cursor.getCount() > 0){
-            int isHas = 0;
+            String isHas = "0";
             String ContactID = "null";
             if (cursor.moveToFirst()){
-                isHas = Integer.parseInt(cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)));//是否有号码，至少有一条号码时，isHas为1，否则为0
+                isHas = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));//是否有号码，至少有一条号码时，isHas为1，否则为0
                 ContactID = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));//获取联系人ID
                 Log.d("getPhoneNum", "ContactID of "+name+" is "+ContactID);
             }//获取查找结果中第一个人的联系人ID
-            if (!ContactID.equals("null") && isHas != 0){
+            if (!ContactID.equals("null") && !isHas.equals("0")){
                 Cursor cursorPhone = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + ContactID,null,null);
                 if (cursorPhone.moveToFirst()){
                     PhoneNum = "";
                     int Numcnt = 0;
                     do{
-                        PhoneNum += ((Numcnt == 0)?"":", ") + cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        PhoneNum += ((Numcnt == 0)?"":"、") + cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                         Numcnt++;
                     } while(cursorPhone.moveToNext());
                     Log.d("getPhoneNum", "PhoneNum of "+name+" is "+PhoneNum);
