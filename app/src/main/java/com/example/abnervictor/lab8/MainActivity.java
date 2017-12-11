@@ -1,10 +1,13 @@
 package com.example.abnervictor.lab8;
 
 import android.content.DialogInterface;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -139,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 editBirthday.setText((String) listItems.get(pos).get("birthday"));
                 editPresent.setText((String) listItems.get(pos).get("present"));
                 //查询通讯录
-                phone.setText("无");
+                phone.setText(getPhoneNum(name));
                 //The specified child already has a parent. You must call removeView() on the child's parent first
                 ViewGroup parent = (ViewGroup) dialogView.getParent();
                 if(parent != null) parent.removeView(dialogView);
@@ -180,6 +183,36 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private String getPhoneNum(String name){
+        String PhoneNum = "无";
+        Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,null,
+                android.provider.ContactsContract.Contacts.DISPLAY_NAME + "='"+name+"'",null,null);
+        if (cursor.getCount() > 0){
+            int isHas = 0;
+            String ContactID = "null";
+            if (cursor.moveToFirst()){
+                isHas = Integer.parseInt(cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)));//是否有号码，至少有一条号码时，isHas为1，否则为0
+                ContactID = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));//获取联系人ID
+                Log.d("getPhoneNum", "ContactID of "+name+" is "+ContactID);
+            }//获取查找结果中第一个人的联系人ID
+            if (!ContactID.equals("null") && isHas != 0){
+                Cursor cursorPhone = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null,ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + ContactID,null,null);
+                if (cursorPhone.moveToFirst()){
+                    PhoneNum = "";
+                    int Numcnt = 0;
+                    do{
+                        PhoneNum += ((Numcnt == 0)?"":", ") + cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        Numcnt++;
+                    } while(cursorPhone.moveToNext());
+                    Log.d("getPhoneNum", "PhoneNum of "+name+" is "+PhoneNum);
+                }
+                cursorPhone.close();
+            }//如果能够获取到联系人ID时执行
+        }
+        cursor.close();
+        return PhoneNum;
     }
 
 }
